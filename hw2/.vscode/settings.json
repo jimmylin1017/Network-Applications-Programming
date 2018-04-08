@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "*.tcc": "cpp",
+        "array": "cpp",
+        "ostream": "cpp",
+        "queue": "cpp",
+        "iostream": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp",
+        "system_error": "cpp",
+        "istream": "cpp",
+        "tuple": "cpp",
+        "iosfwd": "cpp",
+        "fstream": "cpp",
+        "bitset": "cpp",
+        "sstream": "cpp"
+    }
+}
