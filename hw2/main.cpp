@@ -6,7 +6,6 @@ int main()
 
     string fileName = "testfile";
     string fileName2 = "Oversoul.mp3";
-    string fileName3 = "Aimer.mp4";
 
     /*cout<<"PrintCode"<<endl;
     huffmanCoding.PrintCode();

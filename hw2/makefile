@@ -15,4 +15,4 @@ $(EXEC):$(OBJS)
 	$(CXX) $(CXXFLAGS) -c $<
 
 clean:
-	rm -rf $(OBJS) $(DEP)
+	rm -rf $(OBJS)
