@@ -12,11 +12,11 @@ int main()
     cout<<"\nPrintFixCode"<<endl;
     huffmanCoding.PrintFixCode();*/
 
-    //huffmanCoding.CompressByFixCode(fileName);
-    //huffmanCoding.DecompressByFixCode(fileName);
+    huffmanCoding.CompressByFixCode(fileName2);
+    huffmanCoding.DecompressByFixCode(fileName2);
 
-    huffmanCoding.CompressByCode(fileName);
-    huffmanCoding.DecompressByCode(fileName);
+    //huffmanCoding.CompressByCode(fileName2);
+    //huffmanCoding.DecompressByCode(fileName2);
 
     return 0;
 }

@@ -1,14 +1,25 @@
 #include "huffman_coding.h"
 
+int HuffmanCoding::GetFileSizeInBytes(string fileName)
+{
+    struct stat st;
+    if(stat(fileName.c_str(), &st) != 0)
+    {
+        perror("stat");
+        exit(EXIT_FAILURE);
+    }
+
+    return st.st_size;
+}
+
 void HuffmanCoding::ResetAll()
 {
     DEBUG("In ResetAll");
-    memset(dataFreq, 0, CHAR_MAX);
+    memset(dataFreq, 0, sizeof(dataFreq));
     left = right = top = root = NULL;
     codeMap.clear();
     fixCodeMap.clear();
 }
-
 
 bool HuffmanCoding::ReadFileInBinary(string fileName)
 {
@@ -220,6 +231,11 @@ bool HuffmanCoding::CompressByCode(string fileName)
     writeCompressedFile.close();
     writeCodeMap.close();
 
+    int fileSize = GetFileSizeInBytes(fileName);
+    int fileSizeByCompress = GetFileSizeInBytes(fileName + "-compressed");
+    cout<<"Original file length : "<<fileSize<<" bytes, compressed file length : "<<fileSizeByCompress<<" bytes (ratio : "<<(double)(fileSizeByCompress * 100)/fileSize<<"%)"<<endl;
+    cout<<"Using dynamic codeword"<<endl;
+
     return true;
 }
 
@@ -351,20 +367,20 @@ string HuffmanCoding::NumberToBinary(int num)
     return str;
 }
 
-
 void HuffmanCoding::GenerateFixCodeMap()
 {
     DEBUG("In GenerateFixCodeMap");
-    int fixCodeLength = 0;
     int dataSize = minHeapForFix.size();
     string str = "";
+
+    fixCodeLength = 0;
 
     while(dataSize != 0)
     {
         dataSize = dataSize >> 1;
         fixCodeLength++;
     }
-    
+
     DEBUG(fixCodeLength);
 
     dataSize = minHeapForFix.size();
@@ -474,6 +490,11 @@ bool HuffmanCoding::CompressByFixCode(string fileName)
     readOriginalFile.close();
     writeCompressedFile.close();
     writeFixCodeMap.close();
+
+    int fileSize = GetFileSizeInBytes(fileName);
+    int fileSizeByCompress = GetFileSizeInBytes(fileName + "-fix_compressed");
+    cout<<"Original file length : "<<fileSize<<" bytes, compressed file length : "<<fileSizeByCompress<<" bytes (ratio : "<<(double)(fileSizeByCompress * 100)/fileSize<<"%)"<<endl;
+    cout<<"Using fixed-length codeword ("<<fixCodeLength<<" bits)"<<endl;
 
     return true;
 }

@@ -57,6 +57,7 @@ class HuffmanCoding
     // create fix huffman code
     priority_queue<MinHeapNode*, vector<MinHeapNode*>, compareForFix> minHeapForFix;
     map<unsigned char, string> fixCodeMap;
+    int fixCodeLength;
 
     bool ReadFileInBinary(string fileName);
     bool SetData(string fileName, bool checkFixed);
@@ -69,10 +70,11 @@ class HuffmanCoding
     // for fix huffman code
     string NumberToBinary(int num);
     void GenerateFixCodeMap();
+    int GetFileSizeInBytes(string fileName);
 
 public:
 
-    HuffmanCoding() : left(NULL), right(NULL), top(NULL), root(NULL)
+    HuffmanCoding() : left(NULL), right(NULL), top(NULL), root(NULL), fixCodeLength(0)
     {
         DEBUG("HuffmanCoding Initial");
         codeMap.clear();
@@ -88,4 +90,5 @@ public:
     void PrintFixCode();
     bool CompressByFixCode(string fileName);
     bool DecompressByFixCode(string fileName);
+    
 };
