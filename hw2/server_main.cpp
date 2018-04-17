@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
                     s += fileName[i];
                 }
 
+                s = "receive_" + s;
+
                 cout<<"Reveive File : "<<s<<endl;
                 huffmanCoding.DecompressByFixCode(s);
                 cout<<"Decompress File "<<s<<" Finish"<<endl;
@@ -63,6 +65,8 @@ int main(int argc, char *argv[])
                     if(fileName[i] == '-') break;
                     s += fileName[i];
                 }
+
+                s = "receive_" + s;
 
                 cout<<"Reveive File : "<<s<<endl;
                 huffmanCoding.DecompressByCode(s);

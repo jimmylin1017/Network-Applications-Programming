@@ -23,6 +23,20 @@ $(CLIENT_EXEC):$(CLIENT_OBJS)
 clean:
 	rm -rf $(SERVER_OBJS) $(CLIENT_OBJS)
 
+cleanexe:
+	rm -rf $(SERVER_EXEC) $(CLIENT_EXEC)
+
 cleantest:
-	rm -rf receive_test.mp3-fix_code receive_test.mp3-fix_compressed receive_testfile-fix_code receive_testfile-fix_compressed test.mp3-fix_code test.mp3-fix_compressed test.mp3-origin testfile-fix_code testfile-fix_compressed testfile-origin
-	rm -rf receive_test.mp3-code receive_test.mp3-compressed receive_testfile-code receive_testfile-compressed test.mp3-code test.mp3-compressed test.mp3-origin testfile-code testfile-compressed testfile-origin
+	rm -rf receive_test.mp3-fix_code receive_test.mp3-fix_compressed receive_testfile-fix_code receive_testfile-fix_compressed test.mp3-fix_code test.mp3-fix_compressed receive_test.mp3-origin testfile-fix_code testfile-fix_compressed receive_testfile-origin
+	rm -rf receive_test.mp3-code receive_test.mp3-compressed receive_testfile-code receive_testfile-compressed test.mp3-code test.mp3-compressed receive_test.mp3-origin testfile-code testfile-compressed receive_testfile-origin
+
+difftestf:
+	diff test.mp3 receive_test.mp3-origin
+	diff test.mp3-fix_code receive_test.mp3-fix_code
+	diff test.mp3-fix_compressed receive_test.mp3-fix_compressed
+
+difftest:
+	diff test.mp3 receive_test.mp3-origin
+	diff test.mp3-code receive_test.mp3-code
+	diff test.mp3-compressed receive_test.mp3-compressed
+
