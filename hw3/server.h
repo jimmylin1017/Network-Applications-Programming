@@ -4,44 +4,41 @@
 
 class Server
 {
-    struct sockaddr_in *hostAddr;
-    char hostIP4[INET_ADDRSTRLEN];
-    int serverPort;
-    int serverSocket;
-	struct sockaddr_in serverAddr;
-    int serverSocketForFile;
-	struct sockaddr_in serverAddrForFile;
-	int clientSocket;
-	struct sockaddr_in clientAddr;
-    int clientSocketForFile;
-	struct sockaddr_in clientAddrForFile;
+    char hostIP4[INET_ADDRSTRLEN]; // server ip address
+    int serverPort; // server port number
 
-    struct ifaddrs *hostAddrInfo;
+    int serverSocket; // server socket file descriptor
+	struct sockaddr_in serverAddr; // server information : sin_family, sin_addr, sin_port
+	
+    string clientName;
+    int clientSocket; // accept client socket file descriptor
+	struct sockaddr_in clientAddr; // client information : sin_addr, sin_port
+
+    map<string, int> *clientSocketMap; // contain all client socket file descriptor <name, client>
 
 public:
 
     Server(int port):
-    hostAddr(nullptr),
     serverPort(0),
     serverSocket(0),
-    serverSocketForFile(0),
-    clientSocket(0),
-    clientSocketForFile(0),
-    hostAddrInfo(nullptr)
+    clientName(""),
+    clientSocket(0)
     {
         memset(hostIP4, 0, sizeof(hostIP4));
         memset(&serverAddr, 0, sizeof(serverAddr));
-        memset(&serverAddrForFile, 0, sizeof(serverAddrForFile));
         memset(&clientAddr, 0, sizeof(clientAddr));
-        memset(&clientAddrForFile, 0, sizeof(clientAddrForFile));
         
         serverPort = port;
+
+        clientSocketMap = new map<string, int>();
     }
 
-    bool ServerCreate();
-    void ServerListen();
-    void GetHostInfo();
-    void WriteString(string message);
+    void ServerCreate();
+    bool ServerListen();
+    void SendString(string clientName, string message);
+    void BroadCast(string message);
+
     string ReadString();
-    void ReceiveFile(string fileName, int fileSize);
+
+    void ClientHandler();
 };

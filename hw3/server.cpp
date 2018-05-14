@@ -1,48 +1,6 @@
 #include "server.h"
 
-void Server::GetHostInfo()
-{
-    cout<<"GetHostInfo"<<endl;
-
-    if(getifaddrs(&hostAddrInfo) == -1)
-    {
-        perror("getifaddrs");
-        exit(EXIT_FAILURE);
-    }
-    
-    // local ip, for follow for loop to get real ip
-    struct sockaddr_in local;
-    inet_pton(AF_INET, "127.0.0.1", &(local.sin_addr));
-
-    for(auto ifa = hostAddrInfo; ifa != nullptr; ifa = ifa->ifa_next)
-    {
-        if(ifa->ifa_addr == nullptr)
-            continue;
-
-        if(ifa->ifa_addr->sa_family == AF_INET)
-        {
-            hostAddr = (struct sockaddr_in *)ifa->ifa_addr;
-
-            // check local ip, if true then continue to get new one
-            if((hostAddr->sin_addr).s_addr == local.sin_addr.s_addr)
-            {
-                continue;
-            }
-            
-            if (!inet_ntop(ifa->ifa_addr->sa_family, &(hostAddr->sin_addr), hostIP4, sizeof(hostIP4)))
-            {
-                perror("inet_ntop");
-            }
-            else
-            {
-                cout<<hostIP4<<endl;
-                break;
-            }
-        }
-    }
-}
-
-bool Server::ServerCreate()
+void Server::ServerCreate()
 {
     // create server socket fd
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -50,8 +8,7 @@ bool Server::ServerCreate()
 	// socket fd failed
 	if (serverSocket == -1) {
 
-		perror("socket fd failed");
-		return false;
+		ERR_EXIT("socket fd failed");
 	}
 
     // bind socket fd with ip and port
@@ -68,25 +25,22 @@ bool Server::ServerCreate()
     // bind socket and check with failed
 	if(bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
     {
-        perror("socket bind failed");
-        return false;
+        ERR_EXIT("socket bind failed");
     }
 
-    cout<<"Server Create Successful With Port "<<serverPort<<endl;
-
-    return true;
+    cout<<"Server Create Successful With Port : "<<serverPort<<endl;
 }
 
 
-void Server::ServerListen() {
+bool Server::ServerListen()
+{
+    close(clientSocket);
+	cout<<"Listening......"<<endl;
 
-	cout<<"Listening..."<<endl;
-
-	// listen 1 client
-	if(listen(serverSocket, 1) < 0)
+	// listen 5 client
+	if(listen(serverSocket, 5) < 0)
     {
-        perror("listen");
-        exit(EXIT_FAILURE);
+        ERR_EXIT("listen");
     }
 
 	// receive client information
@@ -95,23 +49,40 @@ void Server::ServerListen() {
 
     if(clientSocket < 0)
     {
-        perror("accept");
-        exit(EXIT_FAILURE);
+        ERR_EXIT("accept");
     }
 
-    cout<<inet_ntoa(clientAddr.sin_addr)<<endl;
-
-    cout<<ntohs(clientAddr.sin_port)<<endl;
-
-
     cout<<"Client Connect Success"<<endl;
+
+    return true;
 }
 
-void Server::WriteString(string message)
+void Server::SendString(string clientName, string message)
 {
-	send(clientSocket, message.c_str(), message.length(), 0);
+    if((*clientSocketMap).find(clientName) != (*clientSocketMap).end())
+    {
+        // get target client file descriptor
+        int targetClientSocket = (*clientSocketMap)[clientName];
 
-	cout<<"Send: "<<message<<endl;
+        // send message to target client
+        send(targetClientSocket, message.c_str(), message.length(), 0);
+        cout<<"Send : "<<message<<endl;
+    }
+}
+
+void Server::BroadCast(string message)
+{
+    for(auto it = (*clientSocketMap).begin(); it != (*clientSocketMap).end(); it++)
+    {
+        int targetClientSocket = it->second;
+
+        // send message to target client
+        send(targetClientSocket, message.c_str(), message.length(), 0);
+
+        cout<<it->first<<endl;
+    }
+
+    cout<<"BroadCast : "<<message<<endl;
 }
 
 string Server::ReadString()
@@ -121,41 +92,58 @@ string Server::ReadString()
 
     if((nbytes = recv(clientSocket, message, sizeof(message), 0)) < 0)
     {
-        perror("recv");
-        exit(EXIT_FAILURE);
+        ERR_EXIT("recv");
     }
 
-    if(nbytes == 0)
+    if(nbytes == 0) // client close
     {
         exit(EXIT_SUCCESS);
     }
 
-    cout<<"ReadString "<<nbytes<<" : "<<message<<endl;
+    cout<<"ReadString "<<" : "<<message<<" ("<<nbytes<<")"<<endl;
+
 	return message;
 }
 
-void Server::ReceiveFile(string fileName, int fileSize)
+void Server::ClientHandler()
 {
-	char fileData[BUF_SIZE] = {};
-    int remainData = fileSize;
-    int nbytes = 0;
+    close(serverSocket);
 
-    ofstream fout;
-    fout.open("receive_" + fileName, ios::binary);
+    clientName = ReadString();
+    (*clientSocketMap)[clientName] = clientSocket; // add name and client to map
 
-    while((remainData > 0) && ((nbytes = recv(clientSocket, fileData, sizeof(fileData), 0)) > 0))
+    BroadCast("<User " + clientName + "is on‐line, IP address: " + inet_ntoa(clientAddr.sin_addr) + ".>");
+
+    string input = "";
+    string command = "";
+    string message = "";
+    stringstream ss;
+
+    while(1)
     {
-        if(nbytes > remainData)
-            fout.write(fileData, remainData);
-        else
-            fout.write(fileData, nbytes);
-        remainData -= nbytes;
-        cout<<"remainData : "<<remainData<<endl;
+        command = ReadString();
+        SendString(clientName, "<SendString> " + command);
+        BroadCast("<" + clientName + "> " + command);
     }
 
-    cout<<"File Store Success"<<endl;
+    /*while(true)
+    {
+        message = server.ReadString();
+        ss.str(message);
+        ss>>command>>fileName>>fileSize;
 
-    WriteString("finish");
+        if(command == "upload")
+        {
+            cout<<command<<endl;
+            cout<<fileName<<endl;
+            cout<<fileSize<<endl;
 
-    fout.close();
+            server.WriteString("upload_ack");
+            server.ReceiveFile(fileName, fileSize);
+        }
+
+        // clear stringstream
+        ss.str("");
+        ss.clear();
+    }*/
 }

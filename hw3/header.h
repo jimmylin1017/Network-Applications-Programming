@@ -6,6 +6,7 @@
 #include <cstring>
 #include <string>
 #include <sstream>
+#include <map>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,11 +17,23 @@
 #include <netinet/in.h>
 
 #include <sys/stat.h> // stat()
-#include <fstream>
+#include <signal.h> // signal()
+#include <sys/mman.h> // mmap()
 
 using namespace std;
 
 #endif /* HEADER_H */
+
+#ifndef ERR_EXIT
+
+#define ERR_EXIT(m) \
+    do { \
+        perror(m); \
+        exit(EXIT_FAILURE); \
+    } while (0)
+
+#endif /* ERR_EXIT */
+
 
 #ifdef _DEBUG
     #define DEBUG(x) do { std::cerr<<x<<endl; } while (0)
