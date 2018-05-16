@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "cstdlib": "cpp",
+        "*.tcc": "cpp",
+        "system_error": "cpp",
+        "ostream": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "iostream": "cpp",
+        "iosfwd": "cpp",
+        "array": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "typeinfo": "cpp"
+    }
+}
