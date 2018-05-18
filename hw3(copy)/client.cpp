@@ -35,48 +35,25 @@ void Client::SendString(string message)
 
 	send(serverSocket, message.c_str(), message.length(), 0);
 
-	cout<<"Send : "<<message<<endl;
+	cout<<"[SendString] "<<message<<endl;
 }
 
 string Client::ReadString()
 {
 	char message[BUF_SIZE] = {};
+    int nbytes = 0;
 
-	if(recv(serverSocket, message, sizeof(message), 0) < 0)
+	if((nbytes = recv(serverSocket, message, sizeof(message), 0)) < 0)
     {
         ERR_EXIT("recv");
     }
 
-	return message;
-}
-
-void Client::ClientStart()
-{
-    FD_SET(STDIN_FILENO, &readFdSet);
-    FD_SET(serverSocket, &readFdSet);
-    maxReadFd = serverSocket > STDIN_FILENO ? serverSocket : STDIN_FILENO;
-
-    string message = "", command = "";
-
-    while(1)
+    if(nbytes == 0)
     {
-        if(select(maxReadFd + 1, &readFdSet, NULL, NULL, NULL) < 0)
-        {
-            ERR_EXIT("select");
-        }
-
-        if(FD_ISSET(STDIN_FILENO, &readFdSet))
-        {
-            cin>>command;
-            SendString(command);
-            cout<<"STDIN_FILENO"<<endl;
-        }
-
-        if(FD_ISSET(serverSocket, &readFdSet))
-        {
-            cout<<"serverSocket"<<endl;
-            message = ReadString();
-            cout<<"receive : "<<message<<endl;
-        }
+        return "server shutdown";
     }
+
+    cout<<"[ReadString] "<<message<<endl;
+
+	return message;
 }

@@ -9,26 +9,19 @@ class Client
     int serverSocket;
 	struct sockaddr_in serverAddr;
 
-    fd_set readFdSet;
-    int maxReadFd;
-
 public:
 
     Client(string ip, int port):
-    serverSocket(0),
-    maxReadFd(0)
+    serverSocket(0)
     {
         memset(&serverAddr, 0, sizeof(serverAddr));
 
         serverIP = ip;
         serverPort = port;
-
-        FD_ZERO(&readFdSet);
     }
 
     void ClientCreate();
 	void ClientConnect();
-    void ClientStart();
     void SendString(string message);
 	string ReadString();
 };

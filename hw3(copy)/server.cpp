@@ -1,5 +1,9 @@
 #include "server.h"
 
+/*
+Server
+*/
+
 void Server::ServerCreate()
 {
     // create server socket fd
@@ -36,106 +40,178 @@ bool Server::ServerListen()
 {
 	cout<<"Listening......"<<endl;
 
-	// listen 5 client
-	if(listen(serverSocket, 5) < 0)
+	// listen client
+	if(listen(serverSocket, CLIENT_LIMIT) < 0)
     {
         ERR_EXIT("listen");
     }
 
-    FD_SET(serverSocket, &readFdSet);
-    maxReadFd = serverSocket;
-
     while(1)
     {
-        if(select(maxReadFd + 1, &readFdSet, NULL, NULL, NULL) < 0)
+
+        socklen_t clientAddrSize = sizeof(clientAddr);
+        clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrSize);
+
+        if(clientSocket < 0)
         {
-            ERR_EXIT("select");
+            ERR_EXIT("accept");
         }
 
-        // new client want to connect
-        if(FD_ISSET(serverSocket, &readFdSet))
-        {
-            socklen_t clientAddrSize = sizeof(clientAddr);
-            clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrSize);
-
-            if(clientSocket < 0)
-            {
-                ERR_EXIT("accept");
-            }
-            else
-            {
-                // update max fd number
-                if(clientSocket > maxReadFd)
-                {
-                    maxReadFd = clientSocket;
-                }
-
-                FD_SET(clientSocket, &readFdSet);
-
-                
-
-                // set client username
-                clientName = ReadString(clientSocket);
-                clientSocketMap[clientName] = clientSocket; // add name and client to map
-                clientSocketAddrMap[clientName] = clientAddr; // add client address infomation
-                clientSocketOnline[clientName] = true; // client is online
-                
-                BroadCast("<User " + clientName + "is on‐line, IP address: " + inet_ntoa(clientAddr.sin_addr) + ".>");
-                cout<<"Client ("<<clientName<<") Connect Success"<<endl;
-            }
-        }
-
-        // find which readFd have something to read
-        for(auto it = clientSocketOnline.begin(); it != clientSocketOnline.end(); it++)
-        {
-            // client not online
-            if(!(it->second))
-            {
-                continue;   
-            }
-
-            int readFd = clientSocketMap[it->first];
-
-            // client have something to be read
-            if(FD_ISSET(readFd, &readFdSet))
-            {
-                ClientHandler(readFd);
-            }
-        }
+        ClientHandler clientHandler(clientSocket, clientAddr);
+        thread(ClientHandlerThread, clientHandler).detach();
     }
 
     return true;
 }
 
-void Server::SendString(string clientName, string message)
+void Server::ClientHandlerThread(ClientHandler clientHandler)
 {
-    if(clientSocketMap.find(clientName) != clientSocketMap.end())
+    while(1)
     {
-        // get target client file descriptor
-        int targetClientSocket = clientSocketMap[clientName];
+        string command = clientHandler.ReadMessage();
 
-        // send message to target client
-        send(targetClientSocket, message.c_str(), message.length(), 0);
-        cout<<"Send : "<<message<<endl;
+        if(clientHandler.ExecuteCommand(command)) continue;
+
+        break;
     }
 }
 
-void Server::BroadCast(string message)
+/*
+ClientHandler
+*/
+
+map<string, int>  ClientHandler::clientSocketMap;
+map<string, sockaddr_in> ClientHandler::clientSocketAddrMap;
+map<string, bool> ClientHandler::clientSocketOnline;
+map<string, vector<string>> ClientHandler::clientSocketOffLineMessage;
+
+bool ClientHandler::ExecuteCommand(string command)
+{
+    if(command == "bye")
+    {
+        string message = "<User " + clientName + " is off-line.>";
+        BroadCastMessage(message);
+        return false;
+    }
+
+    stringstream ss(command);
+
+    string operation = "";
+
+    ss>>operation;
+
+    if(operation == "clientname")
+    {
+        cout<<"in clientname"<<endl;
+
+        string name = "";
+        ss>>name;
+
+        // find client name in map
+        if(clientSocketOnline.find(name) != clientSocketOnline.end())
+        {
+            // check client online or not
+            if(!clientSocketOnline[name])
+            {
+                clientName = name;
+                clientSocketMap[name] = clientSocket;
+                clientSocketAddrMap[name] = clientAddr;
+                clientSocketOnline[name] = true;
+
+                string message = "<User " + clientName + " is on-line, IP address: " + inet_ntoa(clientAddr.sin_addr) + ".>";
+                BroadCastMessage(message);
+
+                if(!clientSocketOffLineMessage[name].empty())
+                {
+                    for(int i = 0; i < (int)clientSocketOffLineMessage[name].size(); i++)
+                    {
+                        sleep(0.5);
+                        SendMessage(clientSocket, clientSocketOffLineMessage[name][i]);
+                    }
+
+                    clientSocketOffLineMessage[name].clear();
+                }
+            }
+            else
+            {
+                string str = "<" + name + "> can not be used!";
+                SendMessage(clientSocket, str);
+            }
+        }
+        else
+        {
+            clientName = name;
+            clientSocketMap[name] = clientSocket;
+            clientSocketAddrMap[name] = clientAddr;
+            clientSocketOnline[name] = true;
+            clientSocketOffLineMessage[name].clear();
+
+            string message = "<User " + clientName + " is on-line, IP address: " + inet_ntoa(clientAddr.sin_addr) + ".>";
+            BroadCastMessage(message);
+        }
+    }
+    else if(operation == "chat")
+    {
+        string target = "", message = "";
+        ss>>target>>message;
+
+        // check client exist
+        if(clientSocketOnline.find(target) != clientSocketOnline.end())
+        {
+            // check client online
+            if(clientSocketOnline[target])
+            {
+                message = "@" + clientName + " : " + message;
+                SendMessage(clientSocketMap[target], message);
+            }
+            else
+            {
+                string str = "<" + target + "> is not online!";
+                SendMessage(clientSocket, str);
+
+                message = "@" + clientName + " : " + message;
+                clientSocketOffLineMessage[target].push_back(message);
+            }
+        }
+        else
+        {
+            string str = "<" + target + "> is not exist!";
+            SendMessage(clientSocket, str);
+        }
+    }
+    else if(operation == "chatall")
+    {
+        string message = "";
+        ss>>message;
+
+        message = "@" + clientName + " : " + message;
+        BroadCastMessage(message);
+    }
+
+    return true;
+}
+
+void ClientHandler::BroadCastMessage(string message)
 {
     for(auto it = clientSocketMap.begin(); it != clientSocketMap.end(); it++)
     {
-        int targetClientSocket = it->second;
+        string name = it->first;
+        int targetClientSocket = 0;
+        // client is online
+        if(clientSocketOnline[name])
+        {
+            cout<<name<<endl;
 
-        // send message to target client
-        send(targetClientSocket, message.c_str(), message.length(), 0);
-
-        cout<<it->first<<endl;
+            targetClientSocket = it->second;
+            // send message to target client
+            send(targetClientSocket, message.c_str(), message.length(), 0);
+        }
     }
 
-    cout<<"BroadCast : "<<message<<endl;
+    cout<<"[BroadCast] "<<message<<endl;
 }
 
-string Server::ReadString(int targetClientSocket)
+string ClientHandler::ReadMessage()
 {
 	char message[BUF_SIZE] = {};
     int nbytes;
@@ -147,23 +223,19 @@ string Server::ReadString(int targetClientSocket)
 
     if(nbytes == 0) // client close
     {
-        //clientSocketOnline[]
-        FD_CLR(targetClientSocket, &readFdSet);
+        clientSocketOnline[clientName] = false;
+        cout<<"Client " + clientName + " Disconnect"<<endl;
+        return "bye";
     }
 
-    cout<<"ReadString "<<" : "<<message<<" ("<<nbytes<<")"<<endl;
+    cout<<"[ReadMessage] "<<message<<" ("<<nbytes<<")"<<endl;
 
 	return message;
 }
 
-void Server::ClientHandler(int targetClientSocket)
+void ClientHandler::SendMessage(int targetClientSocket, string message)
 {
-    string input = "";
-    string command = "";
-    string message = "";
-    stringstream ss;
-
-    input = ReadString(targetClientSocket);
-    //SendString(clientName, "<SendString> " + command);
-    BroadCast(input);
+    // send message to target client
+    send(targetClientSocket, message.c_str(), message.length(), 0);
+    cout<<"[SendMessage] "<<message<<endl;
 }

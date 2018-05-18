@@ -6,7 +6,7 @@ CLIENT_OBJS = $(CLIENT_SRCS:$(EXT)=.o)
 SERVER_EXEC = server
 CLIENT_EXEC = client
 CXX  = g++
-CXXFLAGS = -std=c++11 -Wall -g -D _DEBUG
+CXXFLAGS = -std=c++11 -pthread -Wall -g -D _DEBUG
 #CXXFLAGS = -std=c++11 -Wall -g
 
 all:$(SERVER_EXEC) $(CLIENT_EXEC) clean

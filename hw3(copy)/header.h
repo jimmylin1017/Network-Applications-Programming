@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <vector>
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -17,10 +18,8 @@
 #include <unistd.h>
 #include <netinet/in.h>
 
-#include <sys/stat.h> // stat()
-#include <signal.h> // signal()
-#include <sys/mman.h> // mmap()
-
+#include <thread> // thread()
+#include <mutex>
 
 using namespace std;
 
