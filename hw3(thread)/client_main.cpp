@@ -8,7 +8,8 @@ void display(Client client)
     {
         message = client.ReadString();
 
-        cout<<"[Display] "<<message<<endl;
+        //cout<<"[Display] "<<message<<endl;
+        cout<<message<<endl;
 
         if(message == "server shutdown")
         {
@@ -44,7 +45,10 @@ int main()
         string str = "<" + clientName + "> can not be used!";
         client.SendString("clientname " + clientName);
 
-        if(client.ReadString() != str) break;
+        message = client.ReadString();
+        cout<<message<<endl;
+
+        if(message != str) break;
     }
 
     getchar();
@@ -54,6 +58,11 @@ int main()
     while(getline(cin, message))
     {
         client.SendString(message);
+
+        if(message == "bye")
+        {
+            exit(0);
+        }
     }
 
     return 0;

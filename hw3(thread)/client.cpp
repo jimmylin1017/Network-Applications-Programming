@@ -35,7 +35,7 @@ void Client::SendString(string message)
 
 	send(serverSocket, message.c_str(), message.length(), 0);
 
-	cout<<"[SendString] "<<message<<endl;
+	//cout<<"[SendString] "<<message<<endl;
 }
 
 string Client::ReadString()
@@ -53,7 +53,7 @@ string Client::ReadString()
         return "server shutdown";
     }
 
-    cout<<"[ReadString] "<<message<<endl;
+    //cout<<"[ReadString] "<<message<<endl;
 
 	return message;
 }

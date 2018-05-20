@@ -89,6 +89,7 @@ bool ClientHandler::ExecuteCommand(string command)
 {
     if(command == "bye")
     {
+        clientSocketOnline[clientName] = false;
         string message = "<User " + clientName + " is off-line.>";
         BroadCastMessage(message);
         return false;
@@ -161,7 +162,7 @@ bool ClientHandler::ExecuteCommand(string command)
             // check client online
             if(clientSocketOnline[target])
             {
-                message = "@" + clientName + " : " + message;
+                message = "[" + clientName + "] : " + message;
                 SendMessage(clientSocketMap[target], message);
             }
             else
@@ -169,7 +170,7 @@ bool ClientHandler::ExecuteCommand(string command)
                 string str = "<" + target + "> is not online!";
                 SendMessage(clientSocket, str);
 
-                message = "@" + clientName + " : " + message;
+                message = "[" + clientName + "] : " + message;
                 clientSocketOffLineMessage[target].push_back(message);
             }
         }
@@ -179,12 +180,11 @@ bool ClientHandler::ExecuteCommand(string command)
             SendMessage(clientSocket, str);
         }
     }
-    else if(operation == "chatall")
+    else
     {
-        string message = "";
-        ss>>message;
+        string message = operation;
 
-        message = "@" + clientName + " : " + message;
+        message = "[" + clientName + "] : " + message;
         BroadCastMessage(message);
     }
 
@@ -223,7 +223,6 @@ string ClientHandler::ReadMessage()
 
     if(nbytes == 0) // client close
     {
-        clientSocketOnline[clientName] = false;
         cout<<"Client " + clientName + " Disconnect"<<endl;
         return "bye";
     }

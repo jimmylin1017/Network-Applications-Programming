@@ -12,9 +12,9 @@ class ClientHandler
 public:
 
     static map<string, int> clientSocketMap; // contain all client socket file descriptor <name, client>
-    static map<string, sockaddr_in>  clientSocketAddrMap;
-    static map<string, bool> clientSocketOnline;
-    static map<string, vector<string>> clientSocketOffLineMessage;
+    static map<string, sockaddr_in>  clientSocketAddrMap; // contain all client socket address information
+    static map<string, bool> clientSocketOnline; // check client online or not
+    static map<string, vector<string>> clientSocketOffLineMessage; // store client off-line message
 
 	string ReadMessage();
     void SendMessage(int targetClientSocket, string message);
